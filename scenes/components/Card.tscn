@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://card0001"]
+
+[ext_resource type="Script" path="res://scripts/Card.gd" id="1_card"]
+
+[node name="Card" type="Control"]
+custom_minimum_size = Vector2(100, 100)
+script = ExtResource("1_card")

@@ -1,0 +1,13 @@
+# Godot 4 generated files
+.godot/
+export_presets.cfg
+
+# Build outputs
+builds/
+*.apk
+*.aab
+*.exe
+*.x86_64
+
+# Godot editor local settings
+*.uid
