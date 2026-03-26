@@ -5,6 +5,9 @@ var _font: Font = preload("res://assets/fonts/WhaleITried.ttf")
 # Exactly 6 reward animals — those with sound files in assets/audio/animals/
 # Order matters: unlocked one per level beaten (1st level → cow, 2nd → dog, etc.)
 const ANIMALS: Array = ["cow", "dog", "frog", "horse", "parrot", "pig"]
+const FALLBACK_ANIMAL_TEX: String = "res://assets/ui/animal.png"
+# Agora os rewards usam um conjunto separado de sprites "puros"
+# (sem moldura) para não afetar as cartas do jogo.
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -13,7 +16,8 @@ func _ready() -> void:
 func _build_ui() -> void:
 	# Background
 	var bg := TextureRect.new()
-	bg.texture = load("res://assets/ui/bg_cloulds.png")
+	# No original (Cocos), a scene de recompensas usava Textures/2.png.
+	bg.texture = load("res://assets/ui/bg_rewards.png")
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	bg.stretch_mode = TextureRect.STRETCH_SCALE
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -24,8 +28,8 @@ func _build_ui() -> void:
 	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vbox.set_anchor_and_offset(SIDE_LEFT,   0,  30)
 	vbox.set_anchor_and_offset(SIDE_RIGHT,  1, -30)
-	vbox.set_anchor_and_offset(SIDE_TOP,    0,  40)
-	vbox.set_anchor_and_offset(SIDE_BOTTOM, 1, -40)
+	vbox.set_anchor_and_offset(SIDE_TOP,    0,  35)
+	vbox.set_anchor_and_offset(SIDE_BOTTOM, 1, -20)
 	vbox.add_theme_constant_override("separation", 25)
 	add_child(vbox)
 
@@ -48,8 +52,9 @@ func _build_ui() -> void:
 	var grid := GridContainer.new()
 	grid.columns = 3
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 30)
-	grid.add_theme_constant_override("v_separation", 30)
+	grid.add_theme_constant_override("v_separation", 35)
 	vbox.add_child(grid)
 
 	for i in range(ANIMALS.size()):
@@ -58,15 +63,21 @@ func _build_ui() -> void:
 
 		# Wrapper
 		var wrapper := Control.new()
-		wrapper.custom_minimum_size = Vector2(160, 160)
+		wrapper.custom_minimum_size = Vector2(185, 185)
+		wrapper.clip_contents = false
 		grid.add_child(wrapper)
 
 		# Animal image
-		var animal_path := "res://assets/animals/" + animal + ".png"
+		var animal_path := "res://assets/rewards_animals/" + animal + ".png"
 		var img := TextureRect.new()
 		if ResourceLoader.exists(animal_path):
 			img.texture = load(animal_path)
+		elif ResourceLoader.exists(FALLBACK_ANIMAL_TEX):
+			# Evita card "em branco" quando o sprite do animal não existe no assets/animals.
+			img.texture = load(FALLBACK_ANIMAL_TEX)
 		img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		# Como os rewards usam sprites puros (sem moldura), centraliza igual
+		# ao sapo.
 		img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		img.set_anchors_preset(Control.PRESET_FULL_RECT)
 		img.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -80,12 +91,9 @@ func _build_ui() -> void:
 			btn.pressed.connect(_on_animal_pressed.bind(animal))
 			wrapper.add_child(btn)
 		else:
-			# Semi-transparent dark overlay
-			var dim := ColorRect.new()
-			dim.color = Color(0, 0, 0, 0.70)
-			dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-			dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			wrapper.add_child(dim)
+			# Mantém a imagem "solta" (sem quadro/overlay escuro),
+			# mas deixa o animal visualmente desabilitado.
+			img.modulate = Color(1, 1, 1, 0.35)
 
 			# Lock icon — PRESET_FULL_RECT + aspect-centered = fills wrapper but keeps ratio
 			if lock_tex:
@@ -96,11 +104,6 @@ func _build_ui() -> void:
 				lock_img.set_anchors_preset(Control.PRESET_FULL_RECT)
 				lock_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				wrapper.add_child(lock_img)
-
-	# Spacer
-	var sp := Control.new()
-	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(sp)
 
 	# Back button
 	var back_btn := Button.new()
