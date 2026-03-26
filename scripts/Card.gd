@@ -11,14 +11,14 @@ var is_matched:   bool   = false
 var is_animating: bool   = false
 
 # ─── CHILD REFS (built in _ready) ────────────────────────────────────────────
-var _back:   ColorRect
-var _front:  ColorRect
+var _back:   TextureRect
+var _front:  TextureRect
 var _sprite: TextureRect
 
-# ─── COLORS ──────────────────────────────────────────────────────────────────
-const COL_BACK    := Color(0.22, 0.53, 0.90, 1.0)
-const COL_FRONT   := Color(0.98, 0.98, 0.98, 1.0)
-const COL_MATCHED := Color(0.78, 1.00, 0.78, 1.0)
+# ─── COLORS / ASSETS ─────────────────────────────────────────────────────────
+const TEX_BACK    := preload("res://assets/ui/card_back.png")
+const COL_FRONT   := Color(1.0, 1.0, 1.0, 1.0)
+const COL_MATCHED := Color(0.9, 1.0, 0.9, 1.0) # Subtle green glow
 
 # ─── SETUP ───────────────────────────────────────────────────────────────────
 func _ready() -> void:
@@ -27,24 +27,20 @@ func _ready() -> void:
 
 func _build_card() -> void:
 	# Back face
-	_back = ColorRect.new()
-	_back.color = COL_BACK
+	_back = TextureRect.new()
+	_back.texture = TEX_BACK
+	_back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_back.stretch_mode = TextureRect.STRETCH_SCALE
 	_back.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_back)
 
-	var back_lbl := Label.new()
-	back_lbl.text = "?"
-	back_lbl.add_theme_font_size_override("font_size", 56)
-	back_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	back_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	back_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	back_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_back.add_child(back_lbl)
-
 	# Front face
-	_front = ColorRect.new()
-	_front.color   = COL_FRONT
+	_front = TextureRect.new()
+	_front.texture = TEX_BACK # Using wood texture as base for front too if wanted, or plain white
+	_front.modulate = COL_FRONT
+	_front.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_front.stretch_mode = TextureRect.STRETCH_SCALE
 	_front.visible = false
 	_front.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_front.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -56,6 +52,10 @@ func _build_card() -> void:
 	_sprite.expand_mode  = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sprite.offset_bottom = -10
+	_sprite.offset_top = 10
+	_sprite.offset_left = 10
+	_sprite.offset_right = -10
 	_front.add_child(_sprite)
 
 func setup(anim_name: String, idx: int) -> void:
@@ -92,10 +92,13 @@ func flip_open() -> void:
 	if is_animating: return
 	is_animating = true
 	is_flipped   = true
+	
+	AudioManager.play_sfx("res://assets/audio/match-cards.mp3", 0.3) # Reuse for tap if needed or new tap sound
+
 	var tw := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-	tw.tween_property(self, "scale:x", 0.0, 0.10)
+	tw.tween_property(self, "scale:x", 0.0, 0.12)
 	tw.tween_callback(func(): _back.visible = false; _front.visible = true)
-	tw.tween_property(self, "scale:x", 1.0, 0.10)
+	tw.tween_property(self, "scale:x", 1.0, 0.12)
 	await tw.finished
 	is_animating = false
 
@@ -104,27 +107,27 @@ func flip_close() -> void:
 	is_animating = true
 	is_flipped   = false
 	var tw := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
-	tw.tween_property(self, "scale:x", 0.0, 0.10)
+	tw.tween_property(self, "scale:x", 0.0, 0.12)
 	tw.tween_callback(func(): _back.visible = true; _front.visible = false)
-	tw.tween_property(self, "scale:x", 1.0, 0.10)
+	tw.tween_property(self, "scale:x", 1.0, 0.12)
 	await tw.finished
 	is_animating = false
 
 func play_match_effect() -> void:
 	is_matched = true
-	modulate   = COL_MATCHED
 	var tw := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT)
-	tw.tween_property(self, "scale", Vector2(1.18, 1.18), 0.18)
+	tw.tween_property(self, "scale", Vector2(1.25, 1.25), 0.2)
+	tw.tween_property(self, "modulate", COL_MATCHED, 0.2)
 	await tw.finished
 	var tw2 := create_tween().set_parallel(true)
-	tw2.tween_property(self, "scale", Vector2(1.0, 1.0), 0.12)
+	tw2.tween_property(self, "scale", Vector2(1.0, 1.0), 0.15)
 
 func play_error_effect() -> void:
 	var ox := position.x
 	var tw := create_tween().set_trans(Tween.TRANS_SINE)
-	tw.tween_property(self, "position:x", ox + 10, 0.05)
-	tw.tween_property(self, "position:x", ox - 10, 0.05)
-	tw.tween_property(self, "position:x", ox +  7, 0.05)
-	tw.tween_property(self, "position:x", ox -  7, 0.05)
-	tw.tween_property(self, "position:x", ox,      0.05)
+	tw.tween_property(self, "position:x", ox + 15, 0.04)
+	tw.tween_property(self, "position:x", ox - 15, 0.04)
+	tw.tween_property(self, "position:x", ox + 10, 0.04)
+	tw.tween_property(self, "position:x", ox - 10, 0.04)
+	tw.tween_property(self, "position:x", ox,      0.04)
 	await tw.finished

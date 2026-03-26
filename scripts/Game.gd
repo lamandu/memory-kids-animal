@@ -1,8 +1,8 @@
 extends Control
 
 const CARD_SCENE   := preload("res://scenes/components/Card.tscn")
-const HEADER_H     := 90.0
-const MARGIN       := 14.0
+const HEADER_H     := 100.0
+const MARGIN       := 16.0
 
 var _attempts_lbl: Label
 var _pairs_lbl:    Label
@@ -16,11 +16,15 @@ func _ready() -> void:
 	_build_ui()
 	_spawn_cards()
 	_update_hud()
+	
+	AudioManager.play_music("res://assets/audio/bg-sound.mp3", 0.4)
 
 func _build_ui() -> void:
-	# Sky-blue background
-	var bg := ColorRect.new()
-	bg.color = Color(0.12, 0.64, 0.89, 1.0)
+	# Game Background
+	var bg := TextureRect.new()
+	bg.texture = load("res://assets/ui/bg_game.png")
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
@@ -31,30 +35,40 @@ func _build_ui() -> void:
 	vbox.add_theme_constant_override("separation", 0)
 	add_child(vbox)
 
-	# Header
+	# Header (HUD)
 	var header := HBoxContainer.new()
 	header.custom_minimum_size = Vector2(0, HEADER_H)
-	header.add_theme_constant_override("separation", 12)
+	header.add_theme_constant_override("separation", 20)
 	vbox.add_child(header)
 
+	var margin_container := MarginContainer.new()
+	margin_container.add_theme_constant_override("margin_left", 20)
+	margin_container.add_theme_constant_override("margin_right", 20)
+	margin_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(margin_container)
+	
+	var hud_box := HBoxContainer.new()
+	margin_container.add_child(hud_box)
+
 	var back_btn := Button.new()
-	back_btn.text = "  ⬅  "
-	back_btn.custom_minimum_size = Vector2(70, 0)
+	back_btn.text = " MENU "
+	back_btn.custom_minimum_size = Vector2(100, 60)
+	back_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	back_btn.pressed.connect(_on_back_pressed)
-	header.add_child(back_btn)
+	hud_box.add_child(back_btn)
 
 	_attempts_lbl = Label.new()
 	_attempts_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_attempts_lbl.vertical_alignment    = VERTICAL_ALIGNMENT_CENTER
-	_attempts_lbl.add_theme_font_size_override("font_size", 20)
-	header.add_child(_attempts_lbl)
+	_attempts_lbl.add_theme_font_size_override("font_size", 28)
+	hud_box.add_child(_attempts_lbl)
 
 	_pairs_lbl = Label.new()
 	_pairs_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_pairs_lbl.horizontal_alignment  = HORIZONTAL_ALIGNMENT_RIGHT
 	_pairs_lbl.vertical_alignment    = VERTICAL_ALIGNMENT_CENTER
-	_pairs_lbl.add_theme_font_size_override("font_size", 20)
-	header.add_child(_pairs_lbl)
+	_pairs_lbl.add_theme_font_size_override("font_size", 28)
+	hud_box.add_child(_pairs_lbl)
 
 	# Card area (fills remaining space), centered
 	var center := CenterContainer.new()
@@ -80,7 +94,7 @@ func _spawn_cards() -> void:
 		vp = Vector2(720, 1280)
 
 	var avail_w := vp.x      - MARGIN * (cols + 1)
-	var avail_h := vp.y - HEADER_H - MARGIN * (rows + 1) - 10.0
+	var avail_h := vp.y - HEADER_H - MARGIN * (rows + 1) - 40.0
 	var card_sz := floorf(min(avail_w / cols, avail_h / rows))
 
 	for i in deck.size():
@@ -101,7 +115,7 @@ func _on_card_tapped(card: Control) -> void:
 		_can_flip = false
 		Global.register_attempt()
 		_update_hud()
-		await get_tree().create_timer(0.7).timeout
+		await get_tree().create_timer(0.6).timeout
 		await _resolve_match()
 
 func _resolve_match() -> void:
@@ -112,28 +126,33 @@ func _resolve_match() -> void:
 	_flipped.clear()
 
 	if c1.animal_name == c2.animal_name:
+		AudioManager.play_sfx("res://assets/audio/match-cards.mp3")
 		c1.play_match_effect()
 		c2.play_match_effect()
 		Global.register_match()
 		_update_hud()
 		_can_flip = true
+		
 		if Global.matched_pairs >= Global.total_pairs():
+			AudioManager.play_sfx("res://assets/audio/level-complete.mp3")
 			Global.calculate_stars()
-			await get_tree().create_timer(0.7).timeout
+			await get_tree().create_timer(1.0).timeout
 			Global.go_to("res://scenes/Victory.tscn")
 	else:
+		AudioManager.play_sfx("res://assets/audio/no-match-cards.mp3", 0.6)
 		c1.play_error_effect()
 		c2.play_error_effect()
-		await get_tree().create_timer(0.35).timeout
+		await get_tree().create_timer(0.4).timeout
 		await c1.flip_close()
 		await c2.flip_close()
 		_can_flip = true
 
 func _update_hud() -> void:
 	if _attempts_lbl:
-		_attempts_lbl.text = "Tentativas: %d" % Global.attempts
+		_attempts_lbl.text = "TENTATIVAS: %d" % Global.attempts
 	if _pairs_lbl:
-		_pairs_lbl.text = "Pares: %d/%d" % [Global.matched_pairs, Global.total_pairs()]
+		_pairs_lbl.text = "PARES: %d/%d" % [Global.matched_pairs, Global.total_pairs()]
 
 func _on_back_pressed() -> void:
+	AudioManager.stop_music()
 	Global.go_to("res://scenes/Menu.tscn")
