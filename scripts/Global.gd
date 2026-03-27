@@ -138,3 +138,36 @@ func total_pairs() -> int:
 
 func go_to(scene_path: String) -> void:
 	get_tree().change_scene_to_file(scene_path)
+
+static func make_icon_btn(icon: String, color: Color, size: float) -> Button:
+	var btn := Button.new()
+	btn.text = icon
+	btn.custom_minimum_size = Vector2(size, size)
+	btn.add_theme_font_size_override("font_size", int(size * 0.52))
+
+	var r := int(size * 0.45)
+	var sn := StyleBoxFlat.new()
+	sn.bg_color = color
+	sn.set_corner_radius_all(r)
+	sn.border_width_bottom = 5
+	sn.border_width_top = 2
+	sn.border_width_left = 2
+	sn.border_width_right = 2
+	sn.border_color = color.darkened(0.35)
+	sn.shadow_color = Color(0, 0, 0, 0.3)
+	sn.shadow_size = 4
+	sn.shadow_offset = Vector2(0, 3)
+	btn.add_theme_stylebox_override("normal", sn)
+
+	var sh := sn.duplicate()
+	sh.bg_color = color.lightened(0.12)
+	btn.add_theme_stylebox_override("hover", sh)
+
+	var sp := sn.duplicate()
+	sp.bg_color = color.darkened(0.18)
+	sp.shadow_size = 1
+	sp.shadow_offset = Vector2(0, 1)
+	btn.add_theme_stylebox_override("pressed", sp)
+	btn.add_theme_stylebox_override("focus", sn)
+
+	return btn

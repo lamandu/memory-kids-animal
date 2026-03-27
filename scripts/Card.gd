@@ -123,11 +123,7 @@ func play_match_effect() -> void:
 	tw2.tween_property(self, "scale", Vector2(1.0, 1.0), 0.15)
 
 func play_error_effect() -> void:
-	var ox := position.x
-	var tw := create_tween().set_trans(Tween.TRANS_SINE)
-	tw.tween_property(self, "position:x", ox + 15, 0.04)
-	tw.tween_property(self, "position:x", ox - 15, 0.04)
-	tw.tween_property(self, "position:x", ox + 10, 0.04)
-	tw.tween_property(self, "position:x", ox - 10, 0.04)
-	tw.tween_property(self, "position:x", ox,      0.04)
+	var tw := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(self, "rotation", TAU, 0.55)
 	await tw.finished
+	rotation = 0.0

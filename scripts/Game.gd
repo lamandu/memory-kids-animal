@@ -50,9 +50,7 @@ func _build_ui() -> void:
 	var hud_box := HBoxContainer.new()
 	margin_container.add_child(hud_box)
 
-	var back_btn := Button.new()
-	back_btn.text = " MENU "
-	back_btn.custom_minimum_size = Vector2(100, 60)
+	var back_btn := Global.make_icon_btn("🏠", Color(0.88, 0.22, 0.18), 70.0)
 	back_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	back_btn.pressed.connect(_on_back_pressed)
 	hud_box.add_child(back_btn)

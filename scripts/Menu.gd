@@ -1,6 +1,5 @@
 extends Control
 
-var _diff_buttons: Dictionary = {}
 var _font: Font = preload("res://assets/fonts/WhaleITried.ttf")
 
 func _ready() -> void:
@@ -52,12 +51,10 @@ func _build_ui() -> void:
 		var unlocked := Global.is_level_unlocked(key)
 		var num: String = key.split("_")[1]
 
-		# ── Wrapper (fixed size so children can fill it) ──
 		var wrapper := Control.new()
 		wrapper.custom_minimum_size = Vector2(155, 155)
 		grid.add_child(wrapper)
 
-		# Level-number image
 		var btn := TextureButton.new()
 		var num_tex: Texture2D = null
 		if ResourceLoader.exists("res://assets/ui/levels/number_%s.png" % num):
@@ -69,28 +66,16 @@ func _build_ui() -> void:
 		btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 		btn.disabled = not unlocked
 		if unlocked:
-			btn.pressed.connect(_on_diff_pressed.bind(key))
+			btn.pressed.connect(_on_level_pressed.bind(key))
 		wrapper.add_child(btn)
-		_diff_buttons[key] = {"btn": btn, "wrapper": wrapper}
-
-		# Selection glow
-		var indicator := ColorRect.new()
-		indicator.name = "Indicator"
-		indicator.color = Color(1, 1, 0, 0.4)
-		indicator.set_anchors_preset(Control.PRESET_FULL_RECT)
-		indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		indicator.visible = (key == Global.current_difficulty) and unlocked
-		wrapper.add_child(indicator)
 
 		if not unlocked:
-			# Dark overlay  (full rect — works correctly)
 			var dim := ColorRect.new()
 			dim.color = Color(0, 0, 0, 0.65)
 			dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 			dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			wrapper.add_child(dim)
 
-			# Lock icon  (full rect + aspect-centered = auto-centers the image)
 			if lock_tex:
 				var lock_img := TextureRect.new()
 				lock_img.texture      = lock_tex
@@ -105,42 +90,20 @@ func _build_ui() -> void:
 	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(sp)
 
-	# Bottom row
-	var btn_hbox := HBoxContainer.new()
-	btn_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_hbox.add_theme_constant_override("separation", 30)
-	vbox.add_child(btn_hbox)
-
-	var play_btn := Button.new()
-	play_btn.text = " START "
-	play_btn.custom_minimum_size = Vector2(240, 90)
-	play_btn.add_theme_font_override("font", _font)
-	play_btn.add_theme_font_size_override("font_size", 44)
-	play_btn.pressed.connect(_on_play_pressed)
-	btn_hbox.add_child(play_btn)
-
+	# Rewards icon button (only if medals unlocked)
 	if Global.medals_unlocked > 0:
-		var rewards_btn := Button.new()
-		rewards_btn.text = " 🏆 "
-		rewards_btn.custom_minimum_size = Vector2(90, 90)
-		rewards_btn.add_theme_font_size_override("font_size", 40)
+		var rewards_btn := Global.make_icon_btn("🏆", Color(0.95, 0.72, 0.05), 90.0)
+		rewards_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		rewards_btn.pressed.connect(_on_rewards_pressed)
-		btn_hbox.add_child(rewards_btn)
+		vbox.add_child(rewards_btn)
 
 func _on_rewards_pressed() -> void:
 	AudioManager.play_sfx("res://assets/audio/match-cards.mp3", 0.5)
 	Global.go_to("res://scenes/Rewards.tscn")
 
-func _on_diff_pressed(key: String) -> void:
+func _on_level_pressed(key: String) -> void:
 	if not Global.is_level_unlocked(key):
 		return
 	AudioManager.play_sfx("res://assets/audio/match-cards.mp3", 0.5)
 	Global.current_difficulty = key
-	for k in _diff_buttons:
-		var ind = _diff_buttons[k]["wrapper"].get_node_or_null("Indicator")
-		if ind:
-			ind.visible = (k == key) and Global.is_level_unlocked(k)
-
-func _on_play_pressed() -> void:
-	AudioManager.play_sfx("res://assets/audio/match-cards.mp3", 0.5)
 	Global.go_to("res://scenes/Game.tscn")

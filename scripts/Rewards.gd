@@ -105,13 +105,9 @@ func _build_ui() -> void:
 				lock_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				wrapper.add_child(lock_img)
 
-	# Back button
-	var back_btn := Button.new()
-	back_btn.text = " ← VOLTAR "
-	back_btn.custom_minimum_size = Vector2(250, 75)
+	# Back icon button
+	var back_btn := Global.make_icon_btn("◀", Color(0.92, 0.52, 0.08), 90.0)
 	back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	back_btn.add_theme_font_override("font", _font)
-	back_btn.add_theme_font_size_override("font_size", 30)
 	back_btn.pressed.connect(_on_back_pressed)
 	vbox.add_child(back_btn)
 
