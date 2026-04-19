@@ -168,6 +168,5 @@ static func make_icon_btn(icon: String, color: Color, size: float) -> Button:
 	sp.shadow_size = 1
 	sp.shadow_offset = Vector2(0, 1)
 	btn.add_theme_stylebox_override("pressed", sp)
-	btn.add_theme_stylebox_override("focus", sn)
 
 	return btn

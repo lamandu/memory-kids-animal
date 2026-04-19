@@ -31,7 +31,7 @@ func _build_ui() -> void:
 	_panel.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "LEVEL COMPLETE!"
+	title.text = "NÍVEL COMPLETO!"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_override("font", _font)
 	title.add_theme_font_size_override("font_size", 80)
@@ -96,7 +96,7 @@ func _build_ui() -> void:
 	menu_btn.pressed.connect(_on_menu)
 	btn_hbox.add_child(menu_btn)
 
-	var again_btn := Global.make_icon_btn("🔄", Color(0.18, 0.52, 0.92), 95.0)
+	var again_btn := Global.make_icon_btn("↺", Color(0.18, 0.52, 0.92), 95.0)
 	again_btn.pressed.connect(_on_play_again)
 	btn_hbox.add_child(again_btn)
 
