@@ -30,6 +30,7 @@ func _build_ui() -> void:
 	vbox.add_theme_constant_override("separation", 40)
 	_panel.add_child(vbox)
 
+	# Title inside panel (will fade in)
 	var title := Label.new()
 	title.text = "NÍVEL COMPLETO!"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -38,49 +39,40 @@ func _build_ui() -> void:
 	title.add_theme_color_override("font_shadow_color", Color.BLACK)
 	vbox.add_child(title)
 
-	# Stars row container
-	var stars_container := Control.new()
-	stars_container.custom_minimum_size = Vector2(340, 120)
-	stars_container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	vbox.add_child(stars_container)
-
-	# Background slots (faded)
-	var slots := TextureRect.new()
-	slots.texture = load("res://assets/ui/hub_stars.png")
-	slots.set_anchors_preset(Control.PRESET_FULL_RECT)
-	slots.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	slots.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	slots.modulate = Color(1, 1, 1, 0.4)
-	stars_container.add_child(slots)
-
-	var stars_hbox := HBoxContainer.new()
-	stars_hbox.name = "StarsRow"
-	stars_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	stars_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	stars_hbox.add_theme_constant_override("separation", 10)
-	stars_container.add_child(stars_hbox)
-
-	var full_star_tex = load("res://assets/ui/hub_stars.png")
-	for i in 3:
-		var atlas := AtlasTexture.new()
-		atlas.atlas = full_star_tex
-		atlas.region = Rect2(i * 107, 0, 107, 110)
-		var star := TextureRect.new()
-		star.name = "Star%d" % i
-		star.texture = atlas
-		star.expand_mode = TextureRect.EXPAND_KEEP_SIZE
-		star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		star.modulate.a = 0
-		star.scale = Vector2.ZERO
-		star.pivot_offset = Vector2(53, 55)
-		stars_hbox.add_child(star)
-
 	var score_lbl := Label.new()
 	score_lbl.text = "TENTATIVAS: %d\nPONTOS: %d" % [Global.attempts, Global.total_points]
 	score_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	score_lbl.add_theme_font_override("font", _font)
 	score_lbl.add_theme_font_size_override("font_size", 40)
 	vbox.add_child(score_lbl)
+
+	# Stars OUTSIDE the panel (always visible)
+	var stars_container := Control.new()
+	stars_container.name = "StarsContainer"
+	stars_container.custom_minimum_size = Vector2(300, 100)
+	stars_container.set_anchors_preset(Control.PRESET_CENTER)
+	stars_container.position = Vector2(-200, 0)
+	add_child(stars_container)
+
+
+
+	var stars_hbox := HBoxContainer.new()
+	stars_hbox.name = "StarsRow"
+	stars_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stars_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	stars_hbox.add_theme_constant_override("separation", 20)
+	stars_container.add_child(stars_hbox)
+
+	for i in range(1, 4):
+		var star := Label.new()
+		star.name = "Star%d" % i
+		star.text = "⭐"
+		star.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		star.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		star.add_theme_font_size_override("font_size", 80)
+		star.modulate = Color(1, 1, 1, 0.3)
+		star.scale = Vector2(0.5, 0.5)
+		stars_hbox.add_child(star)
 
 	var sp := Control.new()
 	sp.custom_minimum_size = Vector2(0, 20)
@@ -124,19 +116,33 @@ func _run_entrance() -> void:
 	_spawn_fireworks()
 
 func _animate_stars() -> void:
-	var stars_row := find_child("StarsRow")
+	await get_tree().create_timer(0.8).timeout
+
+	var stars_row = find_child("StarsRow", true, false)
 	if not stars_row:
+		push_error("StarsRow NOT FOUND")
 		return
-	await get_tree().create_timer(0.3).timeout
-	for i in Global.stars_earned:
-		var star := stars_row.get_node("Star%d" % i)
+
+
+
+	for i in range(1, 4):
+		var star_name := "Star%d" % i
+		var star = stars_row.get_node(star_name)
+		if star:
+			if i <= Global.stars_earned:
+				star.visible = true
+				star.modulate = Color(1, 0.8, 0, 1)
+				star.scale = Vector2(1.5, 1.5)
+				var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+				tw.tween_property(star, "scale", Vector2(1.0, 1.0), 0.3)
+				await tw.finished
+			else:
+				star.visible = true
+				star.modulate = Color(0.7, 0.7, 0.7, 0.5)
+				star.scale = Vector2(0.8, 0.8)
+	
+	if Global.stars_earned > 0:
 		AudioManager.play_sfx("res://assets/audio/match-cards.mp3", 0.7)
-		var tw := create_tween().set_parallel(true).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-		tw.tween_property(star, "modulate:a", 1.0, 0.3)
-		tw.tween_property(star, "scale", Vector2(1.2, 1.2), 0.4)
-		await tw.finished
-		create_tween().tween_property(star, "scale", Vector2(1.0, 1.0), 0.15)
-		await get_tree().create_timer(0.2).timeout
 
 func _spawn_fireworks() -> void:
 	var vp := get_viewport().get_visible_rect().size

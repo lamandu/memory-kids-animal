@@ -23,15 +23,13 @@ const DIFFICULTIES: Dictionary = {
 	"lvl_24": {"label": "24 Cartas", "pairs": 12, "cols": 4, "rows": 6},
 }
 
-# [3-star max, 2-star max, 1-star max] attempts — 0 stars if above 1-star max
-# Based on pairs count: minimum attempts = pairs (if perfectly lucky)
 const STAR_THRESHOLDS: Dictionary = {
-	"lvl_6":  [5,  9,  15],   # 3 pairs
-	"lvl_8":  [7,  12, 20],   # 4 pairs
-	"lvl_12": [10, 17, 28],   # 6 pairs
-	"lvl_16": [14, 23, 37],   # 8 pairs
-	"lvl_20": [18, 30, 48],   # 10 pairs
-	"lvl_24": [22, 36, 58],   # 12 pairs
+	"lvl_6":  [6,  10, 18],   # 3 pairs: 3★<=6, 2★<=10, 1★<=18
+	"lvl_8":  [8,  14, 24],  # 4 pairs: 3★<=8, 2★<=14, 1★<=24
+	"lvl_12": [12, 20, 36],  # 6 pairs: 3★<=12, 2★<=20, 1★<=36
+	"lvl_16": [16, 26, 48],  # 8 pairs: 3★<=16, 2★<=26, 1★<=48
+	"lvl_20": [20, 32, 60],  # 10 pairs: 3★<=20, 2★<=32, 1★<=60
+	"lvl_24": [24, 38, 72],  # 12 pairs: 3★<=24, 2★<=38, 1★<=72
 }
 
 # Exactly 6 reward animals (those with sounds), one unlocked per level beaten
@@ -104,6 +102,7 @@ func prepare_deck() -> Array:
 	deck.shuffle()
 	attempts      = 0
 	matched_pairs = 0
+	stars_earned  = 0
 	return deck
 
 func register_attempt() -> void:
